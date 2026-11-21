@@ -19,7 +19,22 @@
     var u = new URL(API);
     u.searchParams.set('action', action);
     Object.keys(params || {}).forEach(function (k) { u.searchParams.set(k, params[k]); });
-    return fetch(u.toString()).then(function (r) { return r.json(); }).catch(function () { return { error: 'network' }; });
+    var ctl = window.AbortController ? new AbortController() : null;
+    var timer = ctl ? setTimeout(function () { ctl.abort(); }, 20000) : null;
+    return fetch(u.toString(), ctl ? { signal: ctl.signal } : {})
+      .then(function (r) { return r.json(); })
+      .catch(function () { return { error: 'network' }; })
+      .then(function (r) { if (timer) clearTimeout(timer); return r || { error: 'network' }; });
+  }
+  function cleanUrl(text) {
+    var s = String(text || '').trim();
+    var m = /https?:\/\/[^\s<>"]+/i.exec(s);
+    if (!m) {
+      m = /(?:^|\s)((?:www\.)?[a-z0-9-]+(?:\.[a-z0-9-]+)*\.[a-z]{2,}(?:\/[^\s<>"]*)?)/i.exec(s);
+      if (!m) return '';
+      return 'https://' + m[1].replace(/[).,!?'"]+$/, '');
+    }
+    return m[0].replace(/[).,!?'"]+$/, '');
   }
   function num(v) {
     if (v === null || v === undefined) return NaN;
@@ -40,9 +55,10 @@
     } catch (e) { return ''; }
   }
   function toast(msg) {
+    Array.prototype.forEach.call(document.querySelectorAll('.toast'), function (x) { x.remove(); });
     var t = document.createElement('div');
     t.className = 'toast'; t.textContent = msg; document.body.appendChild(t);
-    setTimeout(function () { t.remove(); }, 2200);
+    setTimeout(function () { t.remove(); }, msg.length > 30 ? 4500 : 2200);
   }
   function shortDate(iso) {
     var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
@@ -93,8 +109,10 @@
     document.body.classList.add('splash-on');
     app.innerHTML = '<div class="splash"><div class="ring"><img class="wreath" src="img/wreath.png" alt=""><img class="santa" src="' + SANTA + '" alt="Loading"></div><div class="name">Secret Santa</div></div>';
   }
-  function fail(title, sub) {
-    page(head('Hello!') + '<div class="card msg"><h2>' + esc(title) + '</h2><p>' + esc(sub || '') + '</p></div>');
+  function fail(title, sub, retry) {
+    page(head('Hello!') + '<div class="card msg"><h2>' + esc(title) + '</h2><p>' + esc(sub || '') + '</p>' +
+      (retry ? '<button class="btn sm" id="retry">Try again</button>' : '') + '</div>');
+    if (retry) document.getElementById('retry').onclick = retry;
   }
   function missionRules(g) {
     return '<div class="mission"><p class="intro">Your mission, should you choose to accept it:</p>' +
@@ -113,7 +131,7 @@
     if (ADMIN) return loadAdmin();
     api('me', { k: TOKEN }).then(function (r) {
       if (r.error === 'not_found') return fail('Hmm, that link didn’t work', 'Ask Darren to send you a fresh one.');
-      if (r.error) return fail('Something went wrong', 'Check your internet and try again in a minute.');
+      if (r.error) return fail('Something went wrong', 'Check your internet and try again.', load);
       S.me = r;
       if (store_get('santa_ok_' + TOKEN) !== '1') return confirmScreen();
       render();
@@ -186,23 +204,32 @@
 
   /* ------------------------------------------------------------ add / edit item */
   function renderItem() {
-    var g = S.me.group, ed = S.editing;
-    var st = {
+    var g = S.me.group, ed = S.editing, draft = S.draft;
+    S.draft = null;
+    var st = draft ? draft.st : {
       url: ed ? ed.url : '', title: ed ? ed.title : '', price: ed && ed.price !== null && ed.price !== '' ? money(ed.price) : '',
       notes: ed ? ed.notes : '', store: ed ? ed.store : '', image: ed ? ed.image : '',
-      loading: false, result: null, details: !!ed
+      loading: false, result: null, details: !!ed, looked: ed ? ed.url : ''
     };
+    var errorMsg = draft ? draft.error : '';
+    var start = JSON.stringify([st.url, st.title, st.price, st.notes]);
     var seq = 0, timer = null;
 
-    function over() { var p = num(st.price); return !isNaN(p) && p > Number(g.budget); }
-    function valid() { return /^https?:\/\/\S+\.\S+/i.test(st.url) && st.title.trim() && !over(); }
+    function priceBad() { var t = String(st.price || '').trim(); if (!t) return false; var p = num(t); return isNaN(p) || p < 0; }
+    function over() { var p = num(st.price); return !priceBad() && !isNaN(p) && p > Number(g.budget); }
+    function priceMsg() { return priceBad() ? 'Enter a price like 45 or 45.99' : over() ? 'Must be ' + money(g.budget) + ' or less' : ''; }
+    function valid() { return !!st.url && !!String(st.title || '').trim() && !priceMsg(); }
+    function dirty() { return JSON.stringify([st.url, st.title, st.price, st.notes]) !== start; }
 
     function draw() {
       var h = '<div class="bar"><button class="btn white sm auto l" id="back">Back</button><h1>Item</h1>' +
         '<button class="btn sm auto r" id="save">Save</button></div>';
+      if (errorMsg) h += '<div class="note bad"><img src="img/alert.svg" alt=""><p>' + esc(errorMsg) + '</p></div>';
       h += '<div class="card tight"><label for="url">Paste a link</label><div class="linkrow">' +
         '<input type="url" id="url" inputmode="url" autocapitalize="off" autocorrect="off" placeholder="Your link here" value="' + esc(st.url) + '">' +
-        '<button class="btn white sm auto" id="clear" aria-label="Clear link">X</button></div></div>';
+        '<button class="btn sm auto icon" id="go" aria-label="Look up link"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></button>' +
+        '<button class="btn white sm auto" id="clear" aria-label="Clear link">X</button></div>' +
+        '<p class="err" id="urlmsg" hidden>Paste a link first</p></div>';
       if (st.loading) h += '<div class="note wait"><img class="spin" src="img/wreath-sm.png" alt=""><p>Looking up your link…</p></div>';
       else if (st.result === 'ok') h += '<div class="note ok"><img src="img/check.svg" alt=""><p>Details grabbed from link</p></div>';
       else if (st.result === 'fail') h += '<div class="note fail"><img src="img/alert.svg" alt=""><p>Couldn’t grab details from link. No worries. Fill in the name and price below.</p></div>';
@@ -211,7 +238,7 @@
         if (st.result === 'fail') h += '<p class="label">Add the details</p>';
         h += '<div class="field"><label for="title">Name</label><input type="text" id="title" placeholder="Add name" value="' + esc(st.title) + '"></div>';
         h += '<div class="field"><label for="price">Price</label><input type="text" id="price" inputmode="decimal" placeholder="Add price" value="' + esc(st.price) + '">' +
-          '<p class="err" id="overmsg"' + (over() ? '' : ' hidden') + '>Must be ' + money(g.budget) + ' or less</p></div>';
+          '<p class="err" id="pricemsg"' + (priceMsg() ? '' : ' hidden') + '>' + esc(priceMsg()) + '</p></div>';
         h += '<div class="field"><label for="notes">Notes (Optional)</label><textarea id="notes" placeholder="Add notes">' + esc(st.notes) + '</textarea></div>';
         if (st.url) h += '<div class="linkline"><img src="img/link.svg" alt=""><span>' + esc(shortUrl(st.url)) + '</span></div>';
         h += '</div>';
@@ -224,18 +251,20 @@
 
     function keep() {
       ['title', 'price', 'notes'].forEach(function (k) { var el = document.getElementById(k); if (el) st[k] = el.value; });
-      var u = document.getElementById('url'); if (u) st.url = u.value.trim();
+      var u = document.getElementById('url'); if (u) st.url = cleanUrl(u.value);
     }
     function refreshSave() {
       var s = document.getElementById('save'); if (s) s.disabled = !valid();
-      var o = document.getElementById('overmsg'); if (o) o.hidden = !over();
+      var m = document.getElementById('pricemsg');
+      if (m) { var t = priceMsg(); m.textContent = t; m.hidden = !t; }
     }
 
-    function lookup() {
+    function lookup(force) {
       keep();
-      if (!/^https?:\/\/\S+\.\S+/i.test(st.url)) return;
+      if (!st.url) { var m = document.getElementById('urlmsg'); if (m && force) m.hidden = false; return; }
+      if (st.url === st.looked && !force) { draw(); return; }
       var mine = ++seq;
-      st.loading = true; st.result = null; draw();
+      st.looked = st.url; st.loading = true; st.result = null; draw();
       api('preview', { k: TOKEN, url: st.url }).then(function (r) {
         if (mine !== seq) return;
         st.loading = false; st.details = true;
@@ -252,19 +281,26 @@
     }
 
     function wire() {
-      document.getElementById('back').onclick = function () { seq++; S.view = 'home'; render(); };
+      document.getElementById('back').onclick = function () {
+        keep();
+        if (dirty() && !window.confirm('Discard your changes?')) return;
+        seq++; S.view = 'home'; render();
+      };
       document.getElementById('save').onclick = save;
       document.getElementById('clear').onclick = function () {
-        seq++; st.url = ''; st.result = null; st.loading = false;
+        seq++; st.url = ''; st.looked = ''; st.result = null; st.loading = false;
         if (!ed) { st.details = false; st.title = ''; st.price = ''; st.notes = ''; st.store = ''; st.image = ''; }
         draw(); document.getElementById('url').focus();
       };
+      document.getElementById('go').onclick = function () { clearTimeout(timer); lookup(true); };
       var u = document.getElementById('url');
+      u.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); clearTimeout(timer); lookup(true); } });
       u.addEventListener('paste', function () { setTimeout(lookup, 50); });
       u.addEventListener('input', function () {
-        refreshSave();
+        st.url = cleanUrl(u.value); refreshSave();
+        var um = document.getElementById('urlmsg'); if (um) um.hidden = true;
         clearTimeout(timer);
-        timer = setTimeout(function () { if (u.value.trim() !== st.url && /^https?:\/\/\S+\.\S+/i.test(u.value.trim())) lookup(); }, 900);
+        timer = setTimeout(function () { if (st.url && st.url !== st.looked) lookup(); }, 900);
       });
       ['title', 'price', 'notes'].forEach(function (k) {
         var el = document.getElementById(k);
@@ -289,8 +325,15 @@
           return;
         }
         S.me.ideas = snapshot;
-        if (S.view === 'home') render();
-        toast(r.error === 'locked' ? 'Lists are locked now.' : r.error === 'max_ideas' ? 'You’re at the limit.' : 'Could not save. Please try again.');
+        var msg = r.error === 'locked' ? 'Lists are locked now, so this item couldn’t be saved.'
+          : r.error === 'max_ideas' ? 'You already have ' + g.maxIdeas + ' items. Remove one to add this.'
+          : 'Couldn’t save. Check your internet and tap Save again.';
+        if (r.error === 'locked') S.me.group.status = 'locked';
+        if (S.view !== 'home' || r.error === 'locked') { if (S.view === 'home') render(); toast(msg); return; }
+        st.loading = false;
+        Array.prototype.forEach.call(document.querySelectorAll('.toast'), function (x) { x.remove(); });
+        S.draft = { st: st, error: msg };
+        S.editing = ed; S.view = 'edit'; render(); window.scrollTo(0, 0);
       });
     }
 
@@ -300,7 +343,12 @@
       S.me.ideas = S.me.ideas.filter(function (x) { return x.id !== id; });
       seq++; S.view = 'home'; S.editing = null; render(); toast('Removed'); window.scrollTo(0, 0);
       api('deleteIdea', { k: TOKEN, id: id }).then(function (r) {
-        if (!r.ok) { S.me.ideas = snapshot; if (S.view === 'home') render(); toast('Could not remove. Please try again.'); }
+        if (!r.ok) {
+          S.me.ideas = snapshot;
+          if (r.error === 'locked') S.me.group.status = 'locked';
+          if (S.view === 'home') render();
+          toast(r.error === 'locked' ? 'Lists are locked now.' : 'Couldn’t remove. Check your internet and try again.');
+        }
       });
     }
 
@@ -311,7 +359,7 @@
   function loadAdmin() {
     api('admin', { a: ADMIN }).then(function (r) {
       if (r.error === 'forbidden') return fail('Admin link not recognized', 'Check the link you saved.');
-      if (r.error) return fail('Something went wrong', 'Try again in a minute.');
+      if (r.error) return fail('Something went wrong', 'Check your internet and try again.', load);
       renderAdmin(r);
     });
   }
@@ -375,7 +423,10 @@
     Array.prototype.forEach.call(app.querySelectorAll('[data-status]'), function (b) {
       b.onclick = function () {
         b.disabled = true;
-        api('setStatus', { a: ADMIN, group: b.getAttribute('data-status'), status: b.getAttribute('data-to') }).then(function () { loadAdmin(); });
+        api('setStatus', { a: ADMIN, group: b.getAttribute('data-status'), status: b.getAttribute('data-to') }).then(function (x) {
+          if (!x || !x.ok) toast('Couldn’t update. Check your internet and try again.');
+          loadAdmin();
+        });
       };
     });
   }

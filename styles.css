@@ -60,6 +60,8 @@ body.splash-on { background: var(--red-dark); }
 .btn.sm { min-height: 44px; padding: 8px 14px; border-radius: 12px; font-size: 16px; line-height: 24px; letter-spacing: .64px; border-bottom-width: 4px; }
 .btn.white.sm { border-width: 3px 3px 4px; }
 .btn.auto { width: auto; flex: none; }
+.btn.icon { padding: 8px 10px; }
+.btn.icon svg { display: block; }
 .btn:active:not([disabled]) { transform: translateY(2px); }
 .btn[disabled] { opacity: .5; cursor: default; }
 
@@ -81,6 +83,7 @@ input:focus, textarea:focus { outline: none; border-color: var(--red); }
 .note p { padding-top: 2px; }
 .note.ok { background: var(--ok-bg); border: 3px solid var(--green); color: var(--green); }
 .note.fail { background: var(--outline); border: 3px solid var(--cocoa); color: var(--text); }
+.note.bad { background: #FFE3E0; border: 3px solid var(--red); color: var(--red-dark); margin: 0 0 -8px; }
 .note.wait { background: #fff; border: 3px solid var(--outline); color: var(--cocoa); align-items: center; gap: 8px; }
 .err { color: var(--red-dark); font-weight: 600; font-size: 17px; }
 .linkline { display: flex; gap: 4px; align-items: flex-start; font-weight: 500; font-size: 19px; line-height: 1.2; color: var(--cocoa); overflow-wrap: anywhere; }
