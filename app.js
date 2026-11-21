@@ -97,13 +97,13 @@
     if (now >= new Date(now.getFullYear(), 11, 26)) xmas = new Date(now.getFullYear() + 1, 11, 25);
     var ms = xmas - now;
     if (ms <= 0) return '<div class="countdown"><span>MERRY CHRISTMAS!</span></div>';
-    var mins = Math.floor(ms / 60000), d = Math.floor(mins / 1440), h = Math.floor((mins % 1440) / 60), m = mins % 60;
-    return '<div class="countdown"><b>' + d + 'D</b><b>' + h + 'H</b><b>' + m + 'M</b><span>UNTIL CHRISTMAS</span></div>';
+    var secs = Math.floor(ms / 1000), d = Math.floor(secs / 86400), h = Math.floor((secs % 86400) / 3600), m = Math.floor((secs % 3600) / 60), sc = secs % 60;
+    return '<div class="countdown"><b>' + d + 'D</b><b>' + h + 'H</b><b>' + m + 'M</b><b class="sec">' + sc + 'S</b><span>UNTIL CHRISTMAS</span></div>';
   }
   setInterval(function () {
     var c = document.querySelector('.countdown');
     if (c) c.outerHTML = countdown();
-  }, 30000);
+  }, 1000);
   function page(inner) {
     document.body.classList.remove('splash-on');
     app.innerHTML = '<div class="page">' + inner + countdown() + '</div>';

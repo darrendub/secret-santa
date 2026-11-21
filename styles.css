@@ -112,8 +112,9 @@ input:focus, textarea:focus { outline: none; border-color: var(--red); }
 .group-name { font-weight: 600; font-size: 21px; text-align: center; }
 
 /* countdown */
-.countdown { display: flex; justify-content: center; gap: 8px; font-size: 16px; color: var(--red-dark); white-space: nowrap; }
+.countdown { font-variant-numeric: tabular-nums; display: flex; justify-content: center; gap: 8px; font-size: 16px; color: var(--red-dark); white-space: nowrap; }
 .countdown b { font-weight: 500; }
+.countdown b.sec { display: inline-block; min-width: 2.2ch; text-align: right; }
 .countdown span { font-weight: 400; letter-spacing: .64px; }
 
 /* misc */
