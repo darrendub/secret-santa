@@ -42,7 +42,6 @@ body.splash-on { background: var(--red-dark); }
 .card-head h2 { margin: 0; font-weight: 600; font-size: 24px; line-height: 1.2; color: var(--cocoa); }
 .pill { border-radius: 999px; padding: 4px 12px; font-weight: 600; font-size: 16px; line-height: 1.2; white-space: nowrap; }
 .pill.dark { background: var(--cocoa); color: var(--cream); }
-.pill.red { background: var(--red); color: #fff; }
 .pill.gold { background: var(--gold); color: var(--cocoa); border: 1px solid var(--cocoa); letter-spacing: .64px; text-transform: uppercase; transform: rotate(-15deg); }
 
 /* item rows */

@@ -191,7 +191,7 @@
       var dl = daysUntil(g.deadline);
       if (dl === null || dl > 0) pill = '<span class="pill dark">Due ' + esc(shortDate(g.deadline)) + '</span>';
       else if (dl === 0) pill = '<span class="pill dark">Due today</span>';
-      else if (!m.ideas.length) pill = '<span class="pill red">Past due</span>';
+      else if (!m.ideas.length) pill = '<span class="pill dark">Past due</span>';
     }
     h += '<div class="card"><div class="card-head"><h2>Your items</h2>' + pill + '</div>';
     if (m.ideas.length) {
