@@ -133,11 +133,13 @@
       (retry ? '<button class="btn sm" id="retry">' + esc(label || 'Try again') + '</button>' : '') + '</div>');
     if (retry) document.getElementById('retry').onclick = retry;
   }
-  function missionRules(g) {
-    return '<div class="mission"><p class="intro">Your mission, should you choose to accept it:</p>' +
-      '<div class="rule"><span class="e">📝</span><p>Add up to ' + g.maxIdeas + ' items to your wishlist.</p></div>' +
+  function missionRules(g, started) {
+    var open = S.rulesOpen === undefined ? !started : S.rulesOpen;
+    return '<div class="mission"><div class="rules-row"><h2>Your mission</h2>' +
+      '<button class="btn white sm auto" id="rulesbtn" aria-expanded="' + open + '">' + (open ? 'Hide' : 'Show') + '</button></div>' +
+      (open ? '<div class="rule"><span class="e">📝</span><p>Add up to ' + g.maxIdeas + ' items to your wishlist.</p></div>' +
       '<div class="rule"><span class="e">💰</span><p>Each item should be up to ' + money(g.budget) + ', from one store. It’s a limit, not a target.</p></div>' +
-      '<div class="rule"><span class="e">🎁</span><p>Bring your wrapped gift to Christmas dinner. Print any digital gift cards.</p></div></div>';
+      '<div class="rule"><span class="e">🎁</span><p>Bring your wrapped gift to Christmas dinner. Print any digital gift cards.</p></div>' : '') + '</div>';
   }
   function meta(i) {
     return [store(i), money(i.price), i.notes].filter(Boolean).map(esc).join(' · ');
@@ -183,7 +185,7 @@
     if (S.view === 'edit') return renderItem();
     var m = S.me, g = m.group, locked = g.status === 'locked';
     var max = g.maxIdeas, full = m.ideas.length >= max;
-    var h = head('Hi ' + m.person.name + '!') + missionRules(g);
+    var h = head('Hi ' + m.person.name + '!') + missionRules(g, m.ideas.length > 0);
 
     var pill = '';
     if (locked) pill = '<span class="pill dark">Lists locked</span>';
@@ -235,6 +237,8 @@
         S.view = 'edit'; render(); window.scrollTo(0, 0);
       };
     });
+    var rb = document.getElementById('rulesbtn');
+    if (rb) rb.onclick = function () { S.rulesOpen = rb.getAttribute('aria-expanded') !== 'true'; render(); };
     var rev = document.getElementById('reveal');
     if (rev) rev.onclick = function () { store_set('santa_rev_' + TOKEN, '1'); render(); };
   }
