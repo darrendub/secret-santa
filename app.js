@@ -128,9 +128,9 @@
     document.body.classList.add('splash-on'); theme('#A51E19');
     app.innerHTML = '<div class="splash"><div class="ring"><img class="wreath" src="img/wreath.png" alt=""><img class="santa" src="' + SANTA + '" alt="Loading"></div><div class="name">Secret Santa</div></div>';
   }
-  function fail(title, sub, retry) {
+  function fail(title, sub, retry, label) {
     page(head('Hello!') + '<div class="card msg"><h2>' + esc(title) + '</h2><p>' + esc(sub || '') + '</p>' +
-      (retry ? '<button class="btn sm" id="retry">Try again</button>' : '') + '</div>');
+      (retry ? '<button class="btn sm" id="retry">' + esc(label || 'Try again') + '</button>' : '') + '</div>');
     if (retry) document.getElementById('retry').onclick = retry;
   }
   function missionRules(g) {
@@ -175,7 +175,7 @@
       '<button class="btn white sm" id="no">Not me</button></div>');
     document.getElementById('yes').onclick = function () { store_set('santa_ok_' + TOKEN, '1'); render(); };
     document.getElementById('no').onclick = function () {
-      fail('Oops!', 'This link belongs to someone else. Ask Darren for yours.');
+      fail('Oops!', 'This link belongs to someone else. Ask Darren for yours.', confirmScreen, 'Go back');
     };
   }
 
