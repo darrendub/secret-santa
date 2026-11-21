@@ -72,6 +72,12 @@
     if (!m) return iso || '';
     return new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   }
+  function daysUntil(iso) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
+    if (!m) return null;
+    var now = new Date(), today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    return Math.round((new Date(+m[1], +m[2] - 1, +m[3]) - today) / 86400000);
+  }
   function longDate(iso) {
     var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
     if (!m) return iso || '';
@@ -179,8 +185,15 @@
     var max = g.maxIdeas, full = m.ideas.length >= max;
     var h = head('Hi ' + m.person.name + '!') + missionRules(g);
 
-    h += '<div class="card"><div class="card-head"><h2>Your items</h2><span class="pill dark">' +
-      (locked ? 'Lists locked' : 'Due ' + esc(shortDate(g.deadline))) + '</span></div>';
+    var pill = '';
+    if (locked) pill = '<span class="pill dark">Lists locked</span>';
+    else {
+      var dl = daysUntil(g.deadline);
+      if (dl === null || dl > 0) pill = '<span class="pill dark">Due ' + esc(shortDate(g.deadline)) + '</span>';
+      else if (dl === 0) pill = '<span class="pill dark">Due today</span>';
+      else if (!m.ideas.length) pill = '<span class="pill red">Past due</span>';
+    }
+    h += '<div class="card"><div class="card-head"><h2>Your items</h2>' + pill + '</div>';
     if (m.ideas.length) {
       h += '<div class="items">';
       m.ideas.forEach(function (i, n) {
