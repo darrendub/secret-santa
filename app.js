@@ -148,6 +148,10 @@
   /* ------------------------------------------------------------ person */
   function cacheMe() { if (S.me) store_set('santa_me_' + TOKEN, JSON.stringify(S.me)); }
   function load() {
+    if (TOKEN && qs.get('reset')) {
+      ['santa_ok_', 'santa_rev_', 'santa_me_'].forEach(function (k) { try { localStorage.removeItem(k + TOKEN); } catch (e) {} });
+      try { history.replaceState(null, '', location.pathname + '?k=' + encodeURIComponent(TOKEN)); } catch (e) {}
+    }
     if (!TOKEN && !ADMIN) return fail('Open your personal link', 'Darren sent you a link just for you. Tap it from your text or email.');
     if (ADMIN) { splash(); return loadAdmin(); }
     var cached = null;
