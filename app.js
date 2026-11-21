@@ -209,8 +209,13 @@
     h += '</div>';
 
     var revealed = store_get('santa_rev_' + TOKEN) === '1';
-    h += '<div class="card"><div class="card-head"><h2>Your target</h2>' +
-      (m.giftee && revealed ? '<span class="pill gold">' + esc(m.giftee.name) + '</span>' : '') + '</div>';
+    h += '<div class="card"><div class="card-head"><h2>Your target</h2></div>';
+    if (m.giftee && revealed) {
+      var gf = m.giftee, av = gf.avatar === 'woman' ? 'img/santa-woman.png' : SANTA;
+      var rows = [['Name', gf.name], ['Location', gf.location], ['Weakness', gf.weakness]].filter(function (r) { return r[1]; });
+      h += '<div class="dossier"><img src="' + av + '" alt=""><div class="facts">' +
+        rows.map(function (r) { return '<p><b>' + r[0] + '</b><span>' + esc(r[1]) + '</span></p>'; }).join('') + '</div></div>';
+    }
     if (!m.giftee) {
       h += '<div class="empty">Names haven’t been drawn yet. Check back soon.</div>';
     } else if (!revealed) {

@@ -14,7 +14,7 @@
 
 var TABS = {
   Groups: ['group_id', 'name', 'year', 'budget', 'deadline', 'max_ideas', 'status', 'drawn_at'],
-  People: ['person_id', 'group_id', 'name', 'full_name', 'phone', 'email', 'household', 'token', 'opened_at', 'active'],
+  People: ['person_id', 'group_id', 'name', 'full_name', 'phone', 'email', 'household', 'token', 'opened_at', 'active', 'avatar', 'location', 'weakness'],
   Exclusions: ['group_id', 'person_a', 'person_b'],
   Ideas: ['idea_id', 'person_id', 'url', 'title', 'price', 'notes', 'kind', 'store', 'image', 'created_at', 'updated_at'],
   Draw: ['group_id', 'santa_id', 'giftee_id', 'bought_at'],
@@ -210,7 +210,10 @@ function me_(p) {
   var giftee = null;
   if (d) {
     var gp = personById_(d.giftee_id);
-    if (gp) giftee = { name: gp.name, ideas: ideasOf_(gp.person_id) };
+    if (gp) giftee = {
+      name: gp.name, ideas: ideasOf_(gp.person_id),
+      avatar: String(gp.avatar || '').toLowerCase(), location: String(gp.location || ''), weakness: String(gp.weakness || '')
+    };
   }
   return {
     ok: true,
@@ -575,6 +578,12 @@ function setup() {
       sh = ss.insertSheet(name);
       sh.getRange(1, 1, 1, TABS[name].length).setValues([TABS[name]]).setFontWeight('bold');
       sh.setFrozenRows(1);
+    } else {
+      // Add any columns this version expects that the tab doesn't have yet.
+      var have = sh.getRange(1, 1, 1, Math.max(sh.getLastColumn(), 1)).getValues()[0];
+      TABS[name].forEach(function (col) {
+        if (have.indexOf(col) < 0) { sh.getRange(1, sh.getLastColumn() + 1).setValue(col).setFontWeight('bold'); have.push(col); }
+      });
     }
   });
   if (!all_('Groups').length) {
