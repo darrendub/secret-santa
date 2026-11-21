@@ -92,24 +92,34 @@
   function head(title) {
     return '<div class="head"><img src="' + SANTA + '" alt=""><h1>' + esc(title) + '</h1></div>';
   }
-  function countdown() {
+  function xmasParts() {
     var now = new Date(), xmas = new Date(now.getFullYear(), 11, 25);
     if (now >= new Date(now.getFullYear(), 11, 26)) xmas = new Date(now.getFullYear() + 1, 11, 25);
     var ms = xmas - now;
-    if (ms <= 0) return '<div class="countdown"><span>MERRY CHRISTMAS!</span></div>';
-    var secs = Math.floor(ms / 1000), d = Math.floor(secs / 86400), h = Math.floor((secs % 86400) / 3600), m = Math.floor((secs % 3600) / 60), sc = secs % 60;
-    return '<div class="countdown"><b>' + d + 'D</b><b>' + h + 'H</b><b>' + m + 'M</b><b class="sec">' + sc + 'S</b><span>UNTIL CHRISTMAS</span></div>';
+    if (ms <= 0) return null;
+    var secs = Math.floor(ms / 1000);
+    return [Math.floor(secs / 86400) + 'D', Math.floor((secs % 86400) / 3600) + 'H', Math.floor((secs % 3600) / 60) + 'M', (secs % 60) + 'S'];
+  }
+  function countdown() {
+    var p = xmasParts();
+    if (!p) return '<div class="countdown"><span>MERRY CHRISTMAS!</span></div>';
+    return '<div class="countdown"><b>' + p[0] + '</b><b>' + p[1] + '</b><b>' + p[2] + '</b><b class="sec">' + p[3] + '</b><span>UNTIL CHRISTMAS</span></div>';
   }
   setInterval(function () {
     var c = document.querySelector('.countdown');
-    if (c) c.outerHTML = countdown();
+    if (!c) return;
+    var p = xmasParts(), bs = c.getElementsByTagName('b');
+    if (!p || bs.length !== 4) { c.outerHTML = countdown(); return; }
+    for (var i = 0; i < 4; i++) if (bs[i].textContent !== p[i]) bs[i].textContent = p[i];
   }, 1000);
+  var themeMeta = document.querySelector('meta[name="theme-color"]');
+  function theme(c) { if (themeMeta) themeMeta.setAttribute('content', c); }
   function page(inner) {
-    document.body.classList.remove('splash-on');
+    document.body.classList.remove('splash-on'); theme('#FFF8EC');
     app.innerHTML = '<div class="page">' + inner + countdown() + '</div>';
   }
   function splash() {
-    document.body.classList.add('splash-on');
+    document.body.classList.add('splash-on'); theme('#A51E19');
     app.innerHTML = '<div class="splash"><div class="ring"><img class="wreath" src="img/wreath.png" alt=""><img class="santa" src="' + SANTA + '" alt="Loading"></div><div class="name">Secret Santa</div></div>';
   }
   function fail(title, sub, retry) {
@@ -218,6 +228,7 @@
 
   /* ------------------------------------------------------------ add / edit item */
   function renderItem() {
+    try { history.pushState({ v: 'edit' }, '', location.href); } catch (e) {}
     var g = S.me.group, ed = S.editing, draft = S.draft;
     S.draft = null;
     var st = draft ? draft.st : {
@@ -235,6 +246,11 @@
     function valid() { return !!st.url && !!String(st.title || '').trim() && !priceMsg(); }
     function dirty() { return JSON.stringify([st.url, st.title, st.price, st.notes]) !== start; }
 
+    S.leave = function () {
+      keep();
+      if (dirty() && !window.confirm('Discard your changes?')) return false;
+      seq++; return true;
+    };
     function draw() {
       var h = '<div class="bar"><button class="btn white sm auto l" id="back">Back</button><h1>Item</h1>' +
         '<button class="btn sm auto r" id="save">Save</button></div>';
@@ -303,11 +319,7 @@
     }
 
     function wire() {
-      document.getElementById('back').onclick = function () {
-        keep();
-        if (dirty() && !window.confirm('Discard your changes?')) return;
-        seq++; S.view = 'home'; render();
-      };
+      document.getElementById('back').onclick = function () { history.back(); };
       document.getElementById('save').onclick = save;
       document.getElementById('clear').onclick = function () {
         seq++; st.url = ''; st.looked = ''; st.result = null; st.loading = false;
@@ -351,7 +363,7 @@
       var data = { id: ed ? ed.id : '', url: st.url, title: st.title.trim(), price: isNaN(p) ? '' : p, notes: st.notes.trim(), kind: 'gift', store: st.store, image: st.image };
       var opt = { id: ed ? ed.id : 'tmp' + Date.now(), url: data.url, title: data.title, price: isNaN(p) ? null : p, notes: data.notes, kind: 'gift', store: data.store, image: data.image };
       if (ed) S.me.ideas = S.me.ideas.map(function (x) { return x.id === ed.id ? opt : x; }); else S.me.ideas = S.me.ideas.concat([opt]);
-      seq++; S.view = 'home'; S.editing = null; render(); toast('Saved!'); window.scrollTo(0, 0);
+      seq++; S.view = 'home'; S.editing = null; render(); toast('Saved!'); window.scrollTo(0, 0); history.back();
       api('saveIdea', { k: TOKEN, data: JSON.stringify(data) }).then(function (r) {
         if (r.ok) {
           S.me.ideas = S.me.ideas.map(function (x) { return x.id === opt.id ? r.idea : x; });
@@ -376,7 +388,7 @@
       if (!window.confirm('Remove this item?')) return;
       var snapshot = S.me.ideas.slice(), id = ed.id;
       S.me.ideas = S.me.ideas.filter(function (x) { return x.id !== id; });
-      seq++; S.view = 'home'; S.editing = null; render(); toast('Removed'); window.scrollTo(0, 0);
+      seq++; S.view = 'home'; S.editing = null; render(); toast('Removed'); window.scrollTo(0, 0); history.back();
       api('deleteIdea', { k: TOKEN, id: id }).then(function (r) {
         if (r.ok) cacheMe();
         if (!r.ok) {
@@ -466,6 +478,12 @@
       };
     });
   }
+
+  window.addEventListener('popstate', function () {
+    if (S.view !== 'edit') return;
+    if (S.leave && !S.leave()) { try { history.pushState({ v: 'edit' }, '', location.href); } catch (e) {} return; }
+    S.view = 'home'; S.editing = null; render(); window.scrollTo(0, 0);
+  });
 
   load();
 })();
