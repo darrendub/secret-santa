@@ -67,7 +67,7 @@
   function rulesBox(g) {
     return '<div class="rules"><h3>The rules</h3><ol>' +
       '<li>Add 1 to ' + g.maxIdeas + ' ideas, each with a link.</li>' +
-      '<li>' + money(g.budget) + ' max. It’s a limit, not a target. Please don’t ask for a gift card to top up.</li>' +
+      '<li>' + money(g.budget) + ' max. It’s a limit, not a target.</li>' +
       '<li>Your Santa picks one store and buys everything from there. Your ideas can be from different stores. A gift card counts as a store too.</li>' +
       '<li>Bring your gift wrapped to Christmas dinner. Print any digital gift cards.</li>' +
       '</ol></div>';
