@@ -97,8 +97,6 @@ input:focus, textarea:focus { outline: none; border-color: var(--red); }
 .note.bad { background: #FFE3E0; border: 3px solid var(--red); color: var(--red-dark); }
 .note.wait { background: #fff; border: 3px solid var(--outline); color: var(--cocoa); align-items: center; gap: 8px; }
 .err { color: var(--red-dark); font-weight: 600; font-size: 17px; }
-.linkline { display: flex; gap: 4px; align-items: flex-start; font-weight: 500; font-size: 19px; line-height: 1.2; color: var(--cocoa); overflow-wrap: anywhere; }
-.linkline img { width: 24px; height: 24px; flex: none; }
 
 /* admin */
 .stats { display: flex; justify-content: center; gap: 24px; text-align: center; }

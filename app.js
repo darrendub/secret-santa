@@ -85,10 +85,6 @@
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).catch(fallback); else fallback();
     toast('Copied!');
   }
-  function shortUrl(u) {
-    var s = String(u || '');
-    return s.length > 44 ? s.slice(0, 43) + '…' : s;
-  }
   function store_get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
   function store_set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 
@@ -259,7 +255,6 @@
         h += '<div class="field"><label for="price">Price</label><div class="money"><span aria-hidden="true">$</span><input type="text" id="price" inputmode="decimal" autocomplete="off" placeholder="0.00" aria-label="Price in dollars" value="' + esc(onlyPrice(st.price)) + '"></div>' +
           '<p class="err" id="pricemsg"' + (priceMsg() ? '' : ' hidden') + '>' + esc(priceMsg()) + '</p></div>';
         h += '<div class="field"><label for="notes">Notes (Optional)</label><textarea id="notes" placeholder="Add notes">' + esc(st.notes) + '</textarea></div>';
-        if (st.url) h += '<div class="linkline"><img src="img/link.svg" alt=""><span>' + esc(shortUrl(st.url)) + '</span></div>';
         h += '</div>';
         if (ed) h += '<button class="btn sm" id="del">Remove item</button>';
       }
