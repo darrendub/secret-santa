@@ -264,17 +264,25 @@
       if (!st.url) { var m = document.getElementById('urlmsg'); if (m && force) m.hidden = false; return; }
       if (st.url === st.looked && !force) { draw(); return; }
       var mine = ++seq;
+      var changed = !!st.looked && st.url !== st.looked;
       st.looked = st.url; st.loading = true; st.result = null; draw();
       api('preview', { k: TOKEN, url: st.url }).then(function (r) {
         if (mine !== seq) return;
         st.loading = false; st.details = true;
         var good = r && r.found && (r.image || (r.price !== null && r.price !== undefined));
         st.result = good ? 'ok' : 'fail';
-        if (r && r.store) st.store = r.store;
-        if (good) {
-          if (r.image) st.image = r.image;
-          if (r.title && !st.title) st.title = r.title;
-          if (r.price !== null && r.price !== undefined && !st.price) st.price = money(r.price);
+        var hasPrice = r && r.price !== null && r.price !== undefined;
+        if (changed) {
+          st.store = (r && r.store) || ''; st.image = '';
+          if (good) { st.title = r.title || ''; st.price = hasPrice ? money(r.price) : ''; if (r.image) st.image = r.image; }
+          else { st.title = ''; st.price = ''; }
+        } else {
+          if (r && r.store) st.store = r.store;
+          if (good) {
+            if (r.image) st.image = r.image;
+            if (r.title && !st.title) st.title = r.title;
+            if (hasPrice && !st.price) st.price = money(r.price);
+          }
         }
         draw();
       });
