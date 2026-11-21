@@ -246,15 +246,15 @@
       if (st.loading) h += '<div class="note wait"><img class="spin" src="img/wreath-sm.png" alt=""><p>Looking up your link…</p></div>';
       else if (st.result === 'ok') h += '<div class="note ok"><img src="img/check.svg" alt=""><p>Details grabbed from link</p></div>';
       else if (st.result === 'fail') h += '<div class="note fail"><img src="img/alert.svg" alt=""><p>Couldn’t grab details from link. No worries. Fill in the name and price below.</p></div>';
-      h += '<div class="card tight"><label for="url">Paste a link</label><div class="linkrow">' +
-        '<input type="url" id="url" inputmode="url" autocapitalize="off" autocorrect="off" placeholder="Your link here" value="' + esc(st.url) + '">' +
-        '<button class="btn sm auto icon" id="go" aria-label="Look up link"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></button>' +
-        '<button class="btn white sm auto" id="clear" aria-label="Clear link">X</button></div>' +
+      h += '<div class="card tight"><label for="url">Paste a link</label><div class="linkbox">' +
+        '<textarea id="url" class="grow" rows="1" inputmode="url" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Your link here">' + esc(st.url) + '</textarea>' +
+        '<div class="linkbtns"><button class="btn sm icon" id="go" aria-label="Look up link"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></button>' +
+        '<button class="btn white sm" id="clear" aria-label="Clear link">X</button></div></div>' +
         '<p class="err" id="urlmsg" hidden>Paste a link first</p></div>';
       if (st.details && !st.loading) {
         h += '<div class="card tight">';
         if (st.result === 'fail') h += '<p class="label">Add the details</p>';
-        h += '<div class="field"><label for="title">Name</label><input type="text" id="title" placeholder="Add name" value="' + esc(st.title) + '"></div>';
+        h += '<div class="field"><label for="title">Name</label><textarea id="title" class="name" placeholder="Add name">' + esc(st.title) + '</textarea></div>';
         h += '<div class="field"><label for="price">Price</label><div class="money"><span aria-hidden="true">$</span><input type="text" id="price" inputmode="decimal" autocomplete="off" placeholder="0.00" aria-label="Price in dollars" value="' + esc(onlyPrice(st.price)) + '"></div>' +
           '<p class="err" id="pricemsg"' + (priceMsg() ? '' : ' hidden') + '>' + esc(priceMsg()) + '</p></div>';
         h += '<div class="field"><label for="notes">Notes (Optional)</label><textarea id="notes" placeholder="Add notes">' + esc(st.notes) + '</textarea></div>';
@@ -328,10 +328,15 @@
         clearTimeout(timer);
         timer = setTimeout(function () { if (st.url && st.url !== st.looked) lookup(); }, 900);
       });
+      var tt = document.getElementById('title');
+      if (tt) tt.addEventListener('keydown', function (e) { if (e.key === 'Enter') e.preventDefault(); });
+      function fit() { u.style.height = 'auto'; u.style.height = u.scrollHeight + 'px'; }
+      fit(); u.addEventListener('input', fit);
       ['title', 'price', 'notes'].forEach(function (k) {
         var el = document.getElementById(k);
         if (el) el.addEventListener('input', function () {
           if (k === 'price') { var c = onlyPrice(el.value); if (c !== el.value) el.value = c; }
+          if (k === 'title' && /[\r\n]/.test(el.value)) el.value = el.value.replace(/[\r\n]+/g, ' ');
           st[k] = el.value; refreshSave();
         });
       });

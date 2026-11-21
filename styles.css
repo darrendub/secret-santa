@@ -72,8 +72,11 @@ body.splash-on { background: var(--red-dark); }
 .bar .l { justify-self: start; }
 label, .label { display: block; font-weight: 600; font-size: 19px; line-height: 1.2; color: var(--cocoa); }
 .field { display: flex; flex-direction: column; gap: 6px; }
-.linkrow { display: flex; gap: 6px; align-items: center; }
-.linkrow input { flex: 1; min-width: 0; }
+.linkbox { display: flex; flex-direction: column; gap: 6px; }
+.linkbtns { display: flex; gap: 6px; }
+.linkbtns .btn { flex: 1; }
+textarea.grow { min-height: 54px; resize: none; overflow: hidden; overflow-wrap: anywhere; }
+textarea.name { min-height: 112px; resize: none; }
 input[type=text], input[type=url], textarea { width: 100%; font: inherit; font-weight: 400; font-size: 19px; line-height: 1.2; color: var(--text); background: #fff; border: 3px solid var(--outline); border-radius: 14px; padding: 12px 14px; min-height: 54px; }
 .money { position: relative; }
 .money span { position: absolute; left: 17px; top: 50%; transform: translateY(-50%); font-weight: 500; font-size: 19px; color: var(--cocoa); pointer-events: none; }
