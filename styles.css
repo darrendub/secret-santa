@@ -75,7 +75,12 @@ label, .label { display: block; font-weight: 600; font-size: 19px; line-height: 
 .linkbox { display: flex; flex-direction: column; gap: 6px; }
 .linkbtns { display: flex; gap: 6px; }
 .linkbtns .btn { flex: 1; }
-textarea.grow { min-height: 54px; resize: none; overflow: hidden; overflow-wrap: anywhere; }
+textarea.grow { display: block; min-height: 54px; resize: none; overflow: hidden; overflow-wrap: anywhere; }
+textarea.grow:not(:focus) { max-height: calc(3.6em + 30px); }
+.linkwrap { position: relative; }
+.linkpeek { position: absolute; top: 0; left: 0; right: 0; min-height: 54px; background: #fff; border: 3px solid var(--outline); border-radius: 14px; padding: 12px 14px; font-weight: 400; font-size: 19px; line-height: 1.2; color: var(--text); pointer-events: none; }
+.linkpeek span { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; max-height: 3.6em; overflow: hidden; overflow-wrap: anywhere; }
+.linkpeek[hidden], textarea.grow:focus + .linkpeek { display: none; }
 textarea.name { min-height: 112px; resize: none; }
 input[type=text], input[type=url], textarea { width: 100%; font: inherit; font-weight: 400; font-size: 19px; line-height: 1.2; color: var(--text); background: #fff; border: 3px solid var(--outline); border-radius: 14px; padding: 12px 14px; min-height: 54px; }
 .money { position: relative; }
