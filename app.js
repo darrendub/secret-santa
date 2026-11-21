@@ -209,7 +209,7 @@
     h += '</div>';
 
     var revealed = store_get('santa_rev_' + TOKEN) === '1';
-    h += '<div class="card"><div class="card-head"><h2>Your target</h2></div>';
+    h += '<div class="card' + (S.justRevealed ? ' revealing' : '') + '"><div class="card-head"><h2>Your target</h2></div>';
     if (m.giftee && revealed) {
       var gf = m.giftee, av = gf.avatar === 'woman' ? 'img/santa-woman.png' : SANTA;
       var rows = [['Name', gf.name], ['Location', gf.location], ['Weakness', gf.weakness]].filter(function (r) { return r[1]; });
@@ -245,7 +245,7 @@
     var rb = document.getElementById('rulesbtn');
     if (rb) rb.onclick = function () { S.rulesOpen = rb.getAttribute('aria-expanded') !== 'true'; render(); };
     var rev = document.getElementById('reveal');
-    if (rev) rev.onclick = function () { store_set('santa_rev_' + TOKEN, '1'); render(); };
+    if (rev) rev.onclick = function () { store_set('santa_rev_' + TOKEN, '1'); S.justRevealed = true; render(); S.justRevealed = false; };
   }
 
   /* ------------------------------------------------------------ add / edit item */
