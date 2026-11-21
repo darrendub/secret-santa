@@ -83,13 +83,13 @@
     if (!m) return iso || '';
     return new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
   }
-  function copy(text) {
+  function copy(text, msg) {
     function fallback() {
       var ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta);
       ta.select(); try { document.execCommand('copy'); } catch (e) {} ta.remove();
     }
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).catch(fallback); else fallback();
-    toast('Copied!');
+    toast(msg || 'Copied!');
   }
   function store_get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
   function store_set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
@@ -438,17 +438,23 @@
     });
   }
 
-  function personLink(p) { return location.origin + '/?k=' + p.token; }
+  function personLink(p) {
+    var origin = /darrendub\.com$/.test(location.hostname) ? 'https://' + location.host : location.origin;
+    return origin + '/?k=' + p.token;
+  }
+  var IS_IOS = /iPhone|iPod|iPad/i.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
+  var IS_PHONE = IS_IOS || /Android/i.test(navigator.userAgent);
+  function smsHref(phone, body) { return 'sms:' + phone + (IS_IOS ? '&body=' : '?body=') + encodeURIComponent(body); }
 
   function messageFor(p, g) {
-    var link = personLink(p);
+    var link = personLink(p), keep = '\nThis link is just for you, please don’t forward it.';
     if (!p.opened) {
-      return 'Hi ' + p.name + '! It’s Secret Santa time 🎅 Tap your private link to add up to ' + g.maxIdeas + ' items to your wishlist (' + money(g.budget) + ' max each). Lists are due ' + longDate(g.deadline) + '.\n' + link;
+      return 'Hi ' + p.name + '! It’s Secret Santa time 🎅 Tap your private link to add up to ' + g.maxIdeas + ' items to your wishlist (' + money(g.budget) + ' max each). Lists are due ' + longDate(g.deadline) + '.\n' + link + keep;
     }
     if (!p.ideaCount) {
-      return 'Hi ' + p.name + '! Quick reminder to add your Secret Santa items by ' + longDate(g.deadline) + ' 🎅 Your link:\n' + link;
+      return 'Hi ' + p.name + '! Quick reminder to add your Secret Santa items by ' + longDate(g.deadline) + ' 🎅 Your link:\n' + link + keep;
     }
-    return 'Hi ' + p.name + '! Here is your Secret Santa link again:\n' + link;
+    return 'Hi ' + p.name + '! Here is your Secret Santa link again:\n' + link + keep;
   }
 
   function renderAdmin(r) {
@@ -462,10 +468,12 @@
       g.people.forEach(function (p) {
         var status = (p.opened ? 'Opened' : 'Not opened') + ' · ' + p.ideaCount + ' item' + (p.ideaCount === 1 ? '' : 's');
         var msg = messageFor(p, g), send;
-        if (p.contact === 'phone' && p.phone) send = '<a class="btn sm" href="sms:' + esc(p.phone) + '?&body=' + encodeURIComponent(msg) + '">Text</a>';
+        if (p.contact === 'phone' && p.phone) send = IS_PHONE
+          ? '<a class="btn sm" href="' + esc(smsHref(p.phone, msg)) + '">Text</a>'
+          : '<button class="btn sm" data-msg="' + esc(msg) + '" data-who="' + esc(p.name) + '">Text</button>';
         else send = '<a class="btn sm" href="mailto:' + esc(p.email) + '?subject=' + encodeURIComponent('Secret Santa ' + g.year) + '&body=' + encodeURIComponent(msg) + '">Email</a>';
         h += '<div class="person"><div class="top"><span class="nm">' + esc(p.name) + '</span><span class="st">' + esc(status) + '</span></div>' +
-          '<div class="acts"><button class="btn white sm" data-copy="' + esc(personLink(p)) + '">Copy</button>' + send + '</div></div>';
+          '<div class="acts"><button class="btn white sm" data-copy="' + esc(msg) + '">Copy</button>' + send + '</div></div>';
       });
       h += '<div class="actions">';
       h += g.drawn ? '<button class="btn white" data-redraw="' + esc(g.id) + '">Re-draw names</button>' : '<button class="btn" data-draw="' + esc(g.id) + '">Draw names</button>';
@@ -474,7 +482,10 @@
     });
     page(h);
 
-    Array.prototype.forEach.call(app.querySelectorAll('[data-copy]'), function (b) { b.onclick = function () { copy(b.getAttribute('data-copy')); }; });
+    Array.prototype.forEach.call(app.querySelectorAll('[data-copy]'), function (b) { b.onclick = function () { copy(b.getAttribute('data-copy'), 'Message copied! Paste it into a text.'); }; });
+    Array.prototype.forEach.call(app.querySelectorAll('[data-msg]'), function (b) {
+      b.onclick = function () { copy(b.getAttribute('data-msg'), 'Copied! Paste it into a text to ' + b.getAttribute('data-who') + '.'); };
+    });
     Array.prototype.forEach.call(app.querySelectorAll('[data-draw]'), function (b) {
       b.onclick = function () {
         if (!window.confirm('Draw names now? Send links after the draw.')) return;
