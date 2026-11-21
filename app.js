@@ -203,7 +203,7 @@
       h += '<div class="card tight"><label for="url">Paste a link</label><div class="linkrow">' +
         '<input type="url" id="url" inputmode="url" autocapitalize="off" autocorrect="off" placeholder="Your link here" value="' + esc(st.url) + '">' +
         '<button class="btn white sm auto" id="clear" aria-label="Clear link">X</button></div></div>';
-      if (st.loading) h += '<div class="note wait"><span class="spin"></span><p>Looking up your link…</p></div>';
+      if (st.loading) h += '<div class="note wait"><img class="spin" src="img/wreath-sm.png" alt=""><p>Looking up your link…</p></div>';
       else if (st.result === 'ok') h += '<div class="note ok"><img src="img/check.svg" alt=""><p>Details grabbed from link</p></div>';
       else if (st.result === 'fail') h += '<div class="note fail"><img src="img/alert.svg" alt=""><p>Couldn’t grab details from link. No worries. Fill in the name and price below.</p></div>';
       if (st.details && !st.loading) {
