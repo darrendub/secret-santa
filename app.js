@@ -116,7 +116,7 @@
       '<p class="sub" style="margin-top:4px">' + esc(dlLine) + '</p>' + rulesBox(g);
     if (!m.ideas.length) h += '<p class="center" style="margin:6px 0 14px">Nothing here yet. Add your first idea!</p>';
     m.ideas.forEach(function (i) {
-      h += ideaRow(i, locked ? '' : '<button class="btn white small" style="flex:none;width:auto" data-edit="' + esc(i.id) + '">Edit</button>');
+      h += ideaRow(i, (locked || String(i.id).indexOf('tmp') === 0) ? '' : '<button class="btn white small" style="flex:none;width:auto" data-edit="' + esc(i.id) + '">Edit</button>');
     });
     if (!locked && m.ideas.length < g.maxIdeas) h += '<div style="margin-top:14px"><button class="btn" id="add">+ Add an idea</button></div>';
     if (locked) h += '<div class="note" style="margin-top:12px">Lists are locked. Time to shop!</div>';
@@ -147,11 +147,9 @@
     var bought = document.getElementById('bought');
     if (bought) bought.onclick = function () {
       var next = !S.me.bought;
-      bought.disabled = true;
+      S.me.bought = next; render(); toast(next ? 'Nice, mission complete!' : 'Marked as not bought');
       api('markBought', { k: TOKEN, value: next ? 'true' : 'false' }).then(function (r) {
-        if (r.ok) { S.me.bought = next; toast(next ? 'Nice, mission complete!' : 'Marked as not bought'); }
-        else toast('Could not save. Try again.');
-        render();
+        if (!r.ok) { S.me.bought = !next; render(); toast('Could not save. Try again.'); }
       });
     };
   }
@@ -227,23 +225,29 @@
       if (!st.title.trim()) return showMsg('Tell us what it is.');
       var p = parseFloat(st.price);
       if (!isNaN(p) && p > g.budget) return showMsg('That’s over the ' + money(g.budget) + ' max. Pick something at or under it.');
-      var b = document.getElementById('save'); b.disabled = true; b.textContent = 'Saving…';
+      var snapshot = S.me.ideas.slice();
+      var opt = { id: ed ? ed.id : 'tmp' + Date.now(), url: st.url, title: st.title.trim(), price: isNaN(p) ? null : p, notes: st.notes, kind: st.kind, store: st.store, image: st.image };
+      if (ed) S.me.ideas = S.me.ideas.map(function (x) { return x.id === ed.id ? opt : x; }); else S.me.ideas = S.me.ideas.concat([opt]);
+      S.view = 'home'; S.editing = null; render(); toast('Saved!'); window.scrollTo(0, 0);
       api('saveIdea', { k: TOKEN, data: JSON.stringify({ id: ed ? ed.id : '', url: st.url, title: st.title, price: st.price, notes: st.notes, kind: st.kind, store: st.store, image: st.image }) }).then(function (r) {
-        if (r.ok) return refresh('Saved!');
-        b.disabled = false; b.textContent = ed ? 'Save changes' : 'Save idea';
-        showMsg(r.error === 'locked' ? 'Lists are locked now.' : r.error === 'max_ideas' ? 'You’re at the limit. Edit or remove one first.' : 'Could not save. Try again.');
+        if (r.ok) {
+          S.me.ideas = S.me.ideas.map(function (x) { return x.id === opt.id ? r.idea : x; });
+          if (S.view === 'home') render();
+          return;
+        }
+        S.me.ideas = snapshot;
+        if (S.view === 'home') render();
+        toast(r.error === 'locked' ? 'Lists are locked now.' : r.error === 'max_ideas' ? 'You\u2019re at the limit.' : 'Could not save. Please try again.');
       });
     }
 
     function remove() {
       if (!window.confirm('Remove this idea?')) return;
-      api('deleteIdea', { k: TOKEN, id: ed.id }).then(function (r) { if (r.ok) refresh('Removed'); else showMsg('Could not remove. Try again.'); });
-    }
-
-    function refresh(msg) {
-      api('me', { k: TOKEN }).then(function (r) {
-        if (r.ok) S.me = r;
-        S.view = 'home'; S.editing = null; render(); toast(msg); window.scrollTo(0, 0);
+      var snapshot = S.me.ideas.slice(), id = ed.id;
+      S.me.ideas = S.me.ideas.filter(function (x) { return x.id !== id; });
+      S.view = 'home'; S.editing = null; render(); toast('Removed'); window.scrollTo(0, 0);
+      api('deleteIdea', { k: TOKEN, id: id }).then(function (r) {
+        if (!r.ok) { S.me.ideas = snapshot; if (S.view === 'home') render(); toast('Could not remove. Please try again.'); }
       });
     }
 
