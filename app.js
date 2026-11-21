@@ -68,7 +68,7 @@
     return '<div class="rules"><h3>The rules</h3><ol>' +
       '<li>Add 1 to ' + g.maxIdeas + ' ideas, each with a link.</li>' +
       '<li>' + money(g.budget) + ' max. It’s a limit, not a target.</li>' +
-      '<li>Your ideas can be from different stores. Your Santa will pick just one store to shop from.</li>' +
+      '<li>Your Santa buys from one store only. Add ideas from any store you like and your Santa will pick one.</li>' +
       '<li>Bring your gift wrapped to Christmas dinner. Print any digital gift cards.</li>' +
       '</ol></div>';
   }
