@@ -200,10 +200,10 @@
         if (mine !== seq) return;
         keep();
         st.loading = false; st.fetched = true;
-        st.failed = !(r && r.found);
+        st.failed = !(r && r.found && (r.image || (r.price !== null && r.price !== undefined)));
         if (r && r.store) st.store = r.store;
-        if (r && r.image) st.image = r.image;
-        if (r && r.found && !st.title) st.title = r.title;
+        if (r && r.image && !st.failed) st.image = r.image;
+        if (!st.failed && !st.title) st.title = r.title;
         if (r && r.price !== null && r.price !== undefined && !st.price) st.price = r.price;
         draw();
       });
