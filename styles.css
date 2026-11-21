@@ -18,7 +18,11 @@ button { font: inherit; }
 /* splash */
 body.splash-on { background: var(--red-dark); }
 .splash { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
-.splash img { width: 100px; height: 100px; }
+.splash .ring { position: relative; width: 180px; height: 180px; display: grid; place-items: center; }
+.splash .wreath { position: absolute; inset: 0; width: 100%; height: 100%; animation: spin 4s linear infinite; }
+.splash .santa { position: relative; width: 100px; height: 100px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .splash .wreath { animation: none; } }
 .splash .name { position: absolute; bottom: 65px; left: 0; right: 0; text-align: center; font-weight: 600; font-size: 28px; color: var(--cream); }
 
 /* header */

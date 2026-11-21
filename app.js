@@ -91,7 +91,7 @@
   }
   function splash() {
     document.body.classList.add('splash-on');
-    app.innerHTML = '<div class="splash"><img src="' + SANTA + '" alt=""><div class="name">Secret Santa</div></div>';
+    app.innerHTML = '<div class="splash"><div class="ring"><img class="wreath" src="img/wreath.png" alt=""><img class="santa" src="' + SANTA + '" alt="Loading"></div><div class="name">Secret Santa</div></div>';
   }
   function fail(title, sub) {
     page(head('Hello!') + '<div class="card msg"><h2>' + esc(title) + '</h2><p>' + esc(sub || '') + '</p></div>');
