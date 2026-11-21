@@ -125,14 +125,25 @@
   }
 
   /* ------------------------------------------------------------ person */
+  function cacheMe() { if (S.me) store_set('santa_me_' + TOKEN, JSON.stringify(S.me)); }
   function load() {
     if (!TOKEN && !ADMIN) return fail('Open your personal link', 'Darren sent you a link just for you. Tap it from your text or email.');
-    splash();
-    if (ADMIN) return loadAdmin();
+    if (ADMIN) { splash(); return loadAdmin(); }
+    var cached = null;
+    if (store_get('santa_ok_' + TOKEN) === '1') { try { cached = JSON.parse(store_get('santa_me_' + TOKEN) || 'null'); } catch (e) {} }
+    if (cached && cached.person && cached.group) { S.me = cached; render(); } else splash();
     api('me', { k: TOKEN }).then(function (r) {
-      if (r.error === 'not_found') return fail('Hmm, that link didn’t work', 'Ask Darren to send you a fresh one.');
-      if (r.error) return fail('Something went wrong', 'Check your internet and try again.', load);
-      S.me = r;
+      if (r.error === 'not_found') { store_set('santa_me_' + TOKEN, ''); return fail('Hmm, that link didn’t work', 'Ask Darren to send you a fresh one.'); }
+      if (r.error) { if (cached) return; return fail('Something went wrong', 'Check your internet and try again.', load); }
+      if (cached) {
+        var busy = S.view !== 'home' || S.me.ideas.some(function (x) { return String(x.id).indexOf('tmp') === 0; });
+        if (busy) return;
+        var changed = JSON.stringify(r) !== JSON.stringify(S.me);
+        S.me = r; cacheMe();
+        if (changed) render();
+        return;
+      }
+      S.me = r; cacheMe();
       if (store_get('santa_ok_' + TOKEN) !== '1') return confirmScreen();
       render();
     });
@@ -224,15 +235,15 @@
     function draw() {
       var h = '<div class="bar"><button class="btn white sm auto l" id="back">Back</button><h1>Item</h1>' +
         '<button class="btn sm auto r" id="save">Save</button></div>';
-      if (errorMsg) h += '<div class="note bad"><img src="img/alert.svg" alt=""><p>' + esc(errorMsg) + '</p></div>';
+      if (errorMsg) h += '<div class="note bad"><img src="img/error.svg" alt=""><p>' + esc(errorMsg) + '</p></div>';
+      if (st.loading) h += '<div class="note wait"><img class="spin" src="img/wreath-sm.png" alt=""><p>Looking up your link…</p></div>';
+      else if (st.result === 'ok') h += '<div class="note ok"><img src="img/check.svg" alt=""><p>Details grabbed from link</p></div>';
+      else if (st.result === 'fail') h += '<div class="note fail"><img src="img/alert.svg" alt=""><p>Couldn’t grab details from link. No worries. Fill in the name and price below.</p></div>';
       h += '<div class="card tight"><label for="url">Paste a link</label><div class="linkrow">' +
         '<input type="url" id="url" inputmode="url" autocapitalize="off" autocorrect="off" placeholder="Your link here" value="' + esc(st.url) + '">' +
         '<button class="btn sm auto icon" id="go" aria-label="Look up link"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></button>' +
         '<button class="btn white sm auto" id="clear" aria-label="Clear link">X</button></div>' +
         '<p class="err" id="urlmsg" hidden>Paste a link first</p></div>';
-      if (st.loading) h += '<div class="note wait"><img class="spin" src="img/wreath-sm.png" alt=""><p>Looking up your link…</p></div>';
-      else if (st.result === 'ok') h += '<div class="note ok"><img src="img/check.svg" alt=""><p>Details grabbed from link</p></div>';
-      else if (st.result === 'fail') h += '<div class="note fail"><img src="img/alert.svg" alt=""><p>Couldn’t grab details from link. No worries. Fill in the name and price below.</p></div>';
       if (st.details && !st.loading) {
         h += '<div class="card tight">';
         if (st.result === 'fail') h += '<p class="label">Add the details</p>';
@@ -329,6 +340,7 @@
       api('saveIdea', { k: TOKEN, data: JSON.stringify(data) }).then(function (r) {
         if (r.ok) {
           S.me.ideas = S.me.ideas.map(function (x) { return x.id === opt.id ? r.idea : x; });
+          cacheMe();
           if (S.view === 'home') render();
           return;
         }
@@ -351,6 +363,7 @@
       S.me.ideas = S.me.ideas.filter(function (x) { return x.id !== id; });
       seq++; S.view = 'home'; S.editing = null; render(); toast('Removed'); window.scrollTo(0, 0);
       api('deleteIdea', { k: TOKEN, id: id }).then(function (r) {
+        if (r.ok) cacheMe();
         if (!r.ok) {
           S.me.ideas = snapshot;
           if (r.error === 'locked') S.me.group.status = 'locked';

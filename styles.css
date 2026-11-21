@@ -78,12 +78,12 @@ input[type=text], input[type=url], textarea { width: 100%; font: inherit; font-w
 textarea { min-height: 96px; resize: vertical; }
 input::placeholder, textarea::placeholder { color: var(--outline); opacity: 1; }
 input:focus, textarea:focus { outline: none; border-color: var(--red); }
-.note { display: flex; gap: 4px; align-items: flex-start; border-radius: 14px; padding: 10px 12px; font-weight: 500; font-size: 17px; line-height: 1.2; margin: -8px 0; }
+.note { display: flex; gap: 4px; align-items: flex-start; border-radius: 14px; padding: 10px 12px; font-weight: 500; font-size: 17px; line-height: 1.2; margin: 0 0 -6px; }
 .note img { width: 24px; height: 24px; flex: none; }
 .note p { padding-top: 2px; }
 .note.ok { background: var(--ok-bg); border: 3px solid var(--green); color: var(--green); }
 .note.fail { background: var(--outline); border: 3px solid var(--cocoa); color: var(--text); }
-.note.bad { background: #FFE3E0; border: 3px solid var(--red); color: var(--red-dark); margin: 0 0 -8px; }
+.note.bad { background: #FFE3E0; border: 3px solid var(--red); color: var(--red-dark); }
 .note.wait { background: #fff; border: 3px solid var(--outline); color: var(--cocoa); align-items: center; gap: 8px; }
 .err { color: var(--red-dark); font-weight: 600; font-size: 17px; }
 .linkline { display: flex; gap: 4px; align-items: flex-start; font-weight: 500; font-size: 19px; line-height: 1.2; color: var(--cocoa); overflow-wrap: anywhere; }
