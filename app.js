@@ -46,6 +46,13 @@
     if (isNaN(n)) return '';
     return '$' + (n % 1 ? n.toFixed(2) : String(n));
   }
+  function plainPrice(v) { var n = num(v); return isNaN(n) ? '' : (n % 1 ? n.toFixed(2) : String(n)); }
+  function onlyPrice(v) {
+    var t = String(v || '').replace(/[^0-9.]/g, '');
+    var i = t.indexOf('.');
+    if (i >= 0) t = t.slice(0, i + 1) + t.slice(i + 1).replace(/\./g, '').slice(0, 2);
+    return t;
+  }
   function store(i) {
     if (i.store) return i.store;
     try {
@@ -218,7 +225,7 @@
     var g = S.me.group, ed = S.editing, draft = S.draft;
     S.draft = null;
     var st = draft ? draft.st : {
-      url: ed ? ed.url : '', title: ed ? ed.title : '', price: ed && ed.price !== null && ed.price !== '' ? money(ed.price) : '',
+      url: ed ? ed.url : '', title: ed ? ed.title : '', price: ed && ed.price !== null && ed.price !== '' ? plainPrice(ed.price) : '',
       notes: ed ? ed.notes : '', store: ed ? ed.store : '', image: ed ? ed.image : '',
       loading: false, result: null, details: !!ed, looked: ed ? ed.url : ''
     };
@@ -248,7 +255,7 @@
         h += '<div class="card tight">';
         if (st.result === 'fail') h += '<p class="label">Add the details</p>';
         h += '<div class="field"><label for="title">Name</label><input type="text" id="title" placeholder="Add name" value="' + esc(st.title) + '"></div>';
-        h += '<div class="field"><label for="price">Price</label><input type="text" id="price" inputmode="decimal" placeholder="Add price" value="' + esc(st.price) + '">' +
+        h += '<div class="field"><label for="price">Price</label><div class="money"><span aria-hidden="true">$</span><input type="text" id="price" inputmode="decimal" autocomplete="off" placeholder="0.00" aria-label="Price in dollars" value="' + esc(onlyPrice(st.price)) + '"></div>' +
           '<p class="err" id="pricemsg"' + (priceMsg() ? '' : ' hidden') + '>' + esc(priceMsg()) + '</p></div>';
         h += '<div class="field"><label for="notes">Notes (Optional)</label><textarea id="notes" placeholder="Add notes">' + esc(st.notes) + '</textarea></div>';
         if (st.url) h += '<div class="linkline"><img src="img/link.svg" alt=""><span>' + esc(shortUrl(st.url)) + '</span></div>';
@@ -285,14 +292,14 @@
         var hasPrice = r && r.price !== null && r.price !== undefined;
         if (changed) {
           st.store = (r && r.store) || ''; st.image = '';
-          if (good) { st.title = r.title || ''; st.price = hasPrice ? money(r.price) : ''; if (r.image) st.image = r.image; }
+          if (good) { st.title = r.title || ''; st.price = hasPrice ? plainPrice(r.price) : ''; if (r.image) st.image = r.image; }
           else { st.title = ''; st.price = ''; }
         } else {
           if (r && r.store) st.store = r.store;
           if (good) {
             if (r.image) st.image = r.image;
             if (r.title && !st.title) st.title = r.title;
-            if (hasPrice && !st.price) st.price = money(r.price);
+            if (hasPrice && !st.price) st.price = plainPrice(r.price);
           }
         }
         draw();
@@ -323,7 +330,10 @@
       });
       ['title', 'price', 'notes'].forEach(function (k) {
         var el = document.getElementById(k);
-        if (el) el.addEventListener('input', function () { st[k] = el.value; refreshSave(); });
+        if (el) el.addEventListener('input', function () {
+          if (k === 'price') { var c = onlyPrice(el.value); if (c !== el.value) el.value = c; }
+          st[k] = el.value; refreshSave();
+        });
       });
       var del = document.getElementById('del'); if (del) del.onclick = remove;
     }

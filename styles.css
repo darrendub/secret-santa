@@ -75,6 +75,9 @@ label, .label { display: block; font-weight: 600; font-size: 19px; line-height: 
 .linkrow { display: flex; gap: 6px; align-items: center; }
 .linkrow input { flex: 1; min-width: 0; }
 input[type=text], input[type=url], textarea { width: 100%; font: inherit; font-weight: 400; font-size: 19px; line-height: 1.2; color: var(--text); background: #fff; border: 3px solid var(--outline); border-radius: 14px; padding: 12px 14px; min-height: 54px; }
+.money { position: relative; }
+.money span { position: absolute; left: 17px; top: 50%; transform: translateY(-50%); font-weight: 500; font-size: 19px; color: var(--cocoa); pointer-events: none; }
+.money input { padding-left: 30px; }
 textarea { min-height: 96px; resize: vertical; }
 input::placeholder, textarea::placeholder { color: var(--outline); opacity: 1; }
 input:focus, textarea:focus { outline: none; border-color: var(--red); }
