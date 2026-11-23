@@ -141,8 +141,10 @@
       '<div class="rule"><span class="e">💰</span><p>Each item should be up to ' + money(g.budget) + ', from one store. It’s a limit, not a target.</p></div>' +
       '<div class="rule"><span class="e">🎁</span><p>Bring your wrapped gift to Christmas dinner. Print any digital gift cards.</p></div>' : '') + '</div>';
   }
-  function meta(i) {
-    return [store(i), money(i.price), i.notes].filter(Boolean).map(esc).join(' · ');
+  function meta(i) { return i.price !== null && i.price !== '' && !isNaN(num(i.price)) ? esc(money(i.price)) : ''; }
+  function noteLine(i) {
+    var t = [store(i), i.notes].filter(Boolean).map(esc).join(' · ');
+    return t ? '<p class="n">' + t + '</p>' : '';
   }
 
   /* ------------------------------------------------------------ person */
@@ -204,7 +206,7 @@
       h += '<div class="items">';
       m.ideas.forEach(function (i, n) {
         var pending = String(i.id).indexOf('tmp') === 0;
-        h += '<div class="item"><div class="num">' + (n + 1) + '</div><div class="det"><p class="t">' + esc(i.title) + '</p><p class="m">' + meta(i) + '</p></div>' +
+        h += '<div class="item"><div class="num">' + (n + 1) + '</div><div class="det"><p class="t">' + esc(i.title) + '</p>' + (meta(i) ? '<p class="m">' + meta(i) + '</p>' : '') + noteLine(i) + '</div>' +
           (locked || pending ? '' : '<button class="btn white sm auto" data-edit="' + esc(i.id) + '">Edit</button>') + '</div>';
       });
       h += '</div>';
@@ -229,7 +231,7 @@
     } else {
       h += '<div class="items">';
       m.giftee.ideas.forEach(function (i) {
-        h += '<div class="item"><div class="det"><p class="t">' + esc(i.title) + '</p><p class="m">' + meta(i) + '</p></div>' +
+        h += '<div class="item"><div class="det"><p class="t">' + esc(i.title) + '</p>' + (meta(i) ? '<p class="m">' + meta(i) + '</p>' : '') + noteLine(i) + '</div>' +
           (i.url ? '<a class="btn white sm auto" href="' + esc(i.url) + '" target="_blank" rel="noopener">Buy</a>' : '') + '</div>';
       });
       h += '</div>';
