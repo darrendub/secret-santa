@@ -232,7 +232,7 @@
       h += '<div class="items">';
       m.giftee.ideas.forEach(function (i) {
         h += '<div class="item"><div class="det"><p class="t">' + esc(i.title) + '</p>' + (meta(i) ? '<p class="m">' + meta(i) + '</p>' : '') + noteLine(i) + '</div>' +
-          (i.url ? '<a class="btn white sm auto" href="' + esc(i.url) + '" target="_blank" rel="noopener">Buy</a>' : '') + '</div>';
+          (i.url ? '<a class="btn sm auto" href="' + esc(i.url) + '" target="_blank" rel="noopener">Buy</a>' : '') + '</div>';
       });
       h += '</div>';
     }
